@@ -12,7 +12,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-  http.HandleFunc("/.well-known/letsencrypt", handler)
-  http.Handle("/", http.FileServer(http.Dir("/srv")))
+  http.HandleFunc("/", handler)
+  http.Handle("/.well-known/acme-challenge/", http.FileServer(http.Dir("/srv")))
   http.ListenAndServe(":8080", nil)
 }
