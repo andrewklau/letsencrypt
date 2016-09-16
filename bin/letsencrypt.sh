@@ -6,7 +6,7 @@ domain="$1"
 token="$2"
 
 export KUBECONFIG=/tmp/.kubeconfig
-oc login --token=$token || exit 1
+oc login kubernetes.default.svc.cluster.local --token=$token || exit 1
 
 if ! oc get --all-namespaces routes --output="jsonpath={.items[?(@.spec.host==\"${hostname}\")]}" | grep -q .; then
   echo "You don't have access to a route for domain ${hostname}" >&2
