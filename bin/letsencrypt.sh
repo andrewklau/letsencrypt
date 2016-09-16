@@ -5,6 +5,8 @@ set -e
 domain="$1"
 token="$2"
 
+echo $* >&2
+
 export KUBECONFIG=/tmp/.kubeconfig
 echo oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$token >&2
 oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$token || exit 1
