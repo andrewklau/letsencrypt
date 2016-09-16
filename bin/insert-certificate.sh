@@ -65,8 +65,6 @@ fi
 OIFS="$IFS"
 IFS=';'
 
-export KUBECONFIG=/tmp/.kubeconfig
-oc login -t $token || exit 1
 #oc project openshift >/dev/null
 
 # Get all the necessary information of the the given hostname's route
