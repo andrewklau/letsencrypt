@@ -23,6 +23,9 @@ while getopts ":h:c:k:d" opt; do
         key_file=$OPTARG
       fi
       ;;
+    t)
+      token=$OPTARG
+      ;;
     d)
       dryrun=true
       ;;
@@ -63,7 +66,8 @@ OIFS="$IFS"
 IFS=';'
 
 export KUBECONFIG=/tmp/.kubeconfig
-oc project openshift >/dev/null
+oc login -t $token || exit 1
+#oc project openshift >/dev/null
 
 # Get all the necessary information of the the given hostname's route
 result=($(oc get --all-namespaces routes --output="jsonpath={range .items[?(@.spec.host==\"$hostname\")]}{.spec.to.name};{.metadata.namespace};{.metadata.name};{.spec}{end}"))
@@ -71,6 +75,11 @@ service=${result[0]}
 namespace=${result[1]}
 route=${result[2]}
 termination=$(expr match "${result[3]}" '.*termination:\([a-z]*\)')
+
+if [ -z "${route}" ]; then
+  echo "You don't have access to a route for domain ${hostname}" >&2
+  exit 1
+fi
 
 IFS="$OIFS"
 
