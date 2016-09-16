@@ -8,7 +8,8 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
   proc := sh("/usr/local/letsencrypt/letsencrypt.sh %s 2>&1", r.URL.Path, strings.Split(r.Header["Authorization"][0], " ")[1])
-  fmt.Fprintln(w,proc.stdout)
+  _ = proc.Err()
+  fmt.Fprintln(w,proc.stderr + proc.stdout)
 }
 
 func main() {
