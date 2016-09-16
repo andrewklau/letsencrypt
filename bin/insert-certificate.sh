@@ -43,7 +43,7 @@ done
 shift $((OPTIND-1))
 
 showsyntax() {
-  echo "Syntax: $0 -h HOSTNAME -c CERTIFICATE_FILE -k KEY_FILE [-d] (dry-run)"
+  echo "Syntax: $0 -t OPENSHIFT_TOKEN -h HOSTNAME -c CERTIFICATE_FILE -k KEY_FILE [-d] (dry-run)"
 }
 
 if [ -z $hostname ]; then

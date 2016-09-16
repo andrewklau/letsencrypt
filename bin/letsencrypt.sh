@@ -5,6 +5,14 @@ set -e
 domain="$1"
 token="$2"
 
+export KUBECONFIG=/tmp/.kubeconfig
+oc login -t $token || exit 1
+
+if ! oc get --all-namespaces routes --output="jsonpath={.items[?(@.spec.host==\"${hostname}\")]}" | grep -q .; then
+  echo "You don't have access to a route for domain ${hostname}" >&2
+  exit 1
+fi
+
 cd /var/lib/letsencrypt
 
 [ -s account.key ] || openssl genrsa 4096 > account.key
