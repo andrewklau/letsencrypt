@@ -24,4 +24,4 @@ else
 fi
 
 echo "Configuring certificate for requests to https://${domain}/"
-/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t "${token"}
+/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t "${token}"
