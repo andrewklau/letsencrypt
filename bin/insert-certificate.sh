@@ -68,7 +68,15 @@ IFS=';'
 #oc project openshift >/dev/null
 
 # Get all the necessary information of the the given hostname's route
-result=($(oc get --all-namespaces routes --output="jsonpath={range .items[?(@.spec.host==\"$hostname\")]}{.spec.to.name};{.metadata.namespace};{.metadata.name};{.spec}{end}"))
+result=''
+projects=$(oc get project -o jsonpath='{.items[*].metadata.name}')
+for project in $project; do
+  result=($(oc get -n $project routes --output="jsonpath={range .items[?(@.spec.host==\"$hostname\")]}{.spec.to.name};{.metadata.namespace};{.metadata.name};{.spec}{end}"))
+  if [ -n "${result}" ]; then
+    break
+  fi
+done
+
 service=${result[0]}
 namespace=${result[1]}
 route=${result[2]}

@@ -6,7 +6,7 @@ domain="$1"
 token="$2"
 
 export KUBECONFIG=/tmp/.kubeconfig
-oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$token || exit 1
+oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$token >/dev/null || exit 1
 
 if ! oc get --all-namespaces routes --output="jsonpath={.items[?(@.spec.host==\"${domain}\")]}" | grep -q .; then
   echo "You don't have access to a route for domain ${domaing}" >&2
