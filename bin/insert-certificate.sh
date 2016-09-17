@@ -2,7 +2,7 @@
 
 dryrun=false
 
-while getopts ":h:c:k:d" opt; do
+while getopts ":h:c:k:t:d" opt; do
   case $opt in
     h)
       hostname=$OPTARG
