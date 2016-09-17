@@ -23,5 +23,5 @@ USER 1001
 
 EXPOSE 8080
 
-WORKDIR /srv
+WORKDIR /tmp
 CMD ["/usr/local/letsencrypt/letsencrypt"]
