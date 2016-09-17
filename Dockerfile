@@ -20,6 +20,7 @@ RUN yum -y --enablerepo=rhel-7-server-optional-rpms install golang-bin && \
     yum clean all
 
 USER 1001
+ENV HOME /var/lib/letsencrypt
 
 EXPOSE 8080
 

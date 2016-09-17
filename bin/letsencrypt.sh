@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 set -e
 
@@ -10,7 +10,7 @@ oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/s
 
 result=''
 projects=$(oc get project -o jsonpath='{.items[*].metadata.name}')
-for project in $project; do
+for project in $projects; do
   routes=($(oc get -n $project routes --output="jsonpath={.items[?(@.spec.host==\"${domain}\")].metadata.name}"))
   if [ -n "${routes}" ]; then
     break
@@ -41,4 +41,4 @@ else
 fi
 
 echo "Configuring certificate for requests to https://${domain}/"
-/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t ${token} -p ${project} -r ${route}
+/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t ${token} -p ${project} -r ${routes}
