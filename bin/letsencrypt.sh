@@ -8,8 +8,17 @@ token="$2"
 export KUBECONFIG=/tmp/.kubeconfig
 oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$token >/dev/null || exit 1
 
-if ! oc get --all-namespaces routes --output="jsonpath={.items[?(@.spec.host==\"${domain}\")]}" | grep -q .; then
-  echo "You don't have access to a route for domain ${domaing}" >&2
+result=''
+projects=$(oc get project -o jsonpath='{.items[*].metadata.name}')
+for project in $project; do
+  routes=($(oc get -n $project routes --output="jsonpath={.items[?(@.spec.host==\"${domain}\")].metadata.name}"))
+  if [ -n "${routes}" ]; then
+    break
+  fi
+done
+
+if [ -z "${routes}" ]; then
+  echo "You don't have access to a route for domain ${domain}" >&2
   exit 1
 fi
 
@@ -32,4 +41,4 @@ else
 fi
 
 echo "Configuring certificate for requests to https://${domain}/"
-/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t "${token}"
+/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t ${token} -p ${project} -r ${route}

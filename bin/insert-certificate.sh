@@ -2,7 +2,7 @@
 
 dryrun=false
 
-while getopts ":h:c:k:t:d" opt; do
+while getopts ":h:c:k:t:p:r:d" opt; do
   case $opt in
     h)
       hostname=$OPTARG
@@ -25,6 +25,12 @@ while getopts ":h:c:k:t:d" opt; do
       ;;
     t)
       token=$OPTARG
+      ;;
+    p)
+      project=$OPTARG
+      ;;
+    r)
+      route=$OPTARG
       ;;
     d)
       dryrun=true
@@ -61,6 +67,21 @@ if [ -z $key_file ]; then
   showsyntax
   exit 1
 fi
+if [ -z $token ]; then
+  echo "ERROR: Option -t is required." >&2
+  showsyntax
+  exit 1
+fi
+if [ -z $project ]; then
+  echo "ERROR: Option -p is required." >&2
+  showsyntax
+  exit 1
+fi
+if [ -z $route ]; then
+  echo "ERROR: Option -r is required." >&2
+  showsyntax
+  exit 1
+fi
 
 OIFS="$IFS"
 IFS=';'
@@ -68,24 +89,17 @@ IFS=';'
 #oc project openshift >/dev/null
 
 # Get all the necessary information of the the given hostname's route
-result=''
-projects=$(oc get project -o jsonpath='{.items[*].metadata.name}')
-for project in $project; do
-  result=($(oc get -n $project routes --output="jsonpath={range .items[?(@.spec.host==\"$hostname\")]}{.spec.to.name};{.metadata.namespace};{.metadata.name};{.spec}{end}"))
-  if [ -n "${result}" ]; then
-    break
-  fi
-done
-
+#result=''
+#projects=$(oc get project -o jsonpath='{.items[*].metadata.name}')
+#for project in $project; do
+#  result=($(oc get -n $project routes --output="jsonpath={range .items[?(@.spec.host==\"$hostname\")]}{.spec.to.name};{.metadata.namespace};{.metadata.name};{.spec}{end}"))
+#  if [ -n "${result}" ]; then
+#    break
+#  fi
+#done
+result=($(oc get -n $project route ${route} --output="jsonpath={.spec.to.name};{.spec.tls..termination}"))
 service=${result[0]}
-namespace=${result[1]}
-route=${result[2]}
-termination=$(expr match "${result[3]}" '.*termination:\([a-z]*\)')
-
-if [ -z "${route}" ]; then
-  echo "You don't have access to a route for domain ${hostname}" >&2
-  exit 1
-fi
+termination=${result[1]}
 
 IFS="$OIFS"
 
@@ -103,16 +117,16 @@ else
 fi
 
 # Create backup of route's json definition, just in case
-if [ ! -e "$route.routebackup.json" ]; then
-  oc export --namespace=$namespace routes $route --output=json > $route.routebackup.json
+if [ ! -e "${project}_${route}.routebackup.json" ]; then
+  oc export --namespace=$project routes $route --output=json > ${project}_${route}.routebackup.json
 else
-  oc export --namespace=$namespace routes $route --output=json > $route.routebackup.json.1
+  oc export --namespace=$project routes $route --output=json > ${project}_${route}.routebackup.json.1
 fi
 
 # Modify the existing route
 case $termination in
   edge|reencrypt)
-    oc export --namespace=$namespace routes $route --output=json | jq " \
+    oc export --namespace=$project routes $route --output=json | jq " \
     .spec.tls.key=\"${key}\" | \
     .spec.tls.certificate=\"${cert}\" | \
     .spec.tls.caCertificate=\"${ca}\"" > \
@@ -122,7 +136,7 @@ case $termination in
     destination_ca=$(openssl s_client -connect ${hostname}:443 -servername ${hostname} -prexit -showcerts </dev/null 2>/dev/null | sed -nr '/BEGIN\ CERTIFICATE/H;//,/END\ CERTIFICATE/G;s/\n(\n[^\n]*){2}$//p' | sed ':a;N;$!ba;s/\n/\\n/g')
 
     if [ -n "$destination_ca" ]; then
-      oc export --namespace=$namespace routes $route --output=json | jq " \
+      oc export --namespace=$project routes $route --output=json | jq " \
       .spec.tls.termination=\"reencrypt\" | \
       .spec.tls.key=\"${key}\" | \
       .spec.tls.certificate=\"${cert}\" | \
@@ -135,7 +149,7 @@ case $termination in
     fi
     ;;
   *)
-    oc export --namespace=$namespace routes $route --output=json | jq " \
+    oc export --namespace=$project routes $route --output=json | jq " \
     .spec.tls.termination=\"edge\" | \
     .spec.tls.key=\"${key}\" | \
     .spec.tls.certificate=\"${cert}\" | \
@@ -149,6 +163,6 @@ if $dryrun; then
   echo -e "Dry-run enabled, old route not replaced. New route would look like this:\n"
   cat /tmp/$route.new.json
 else
-  oc replace --namespace=$namespace routes $route -f /tmp/$route.new.json
+  oc replace --namespace=$project routes $route -f /tmp/$route.new.json
 fi
 
