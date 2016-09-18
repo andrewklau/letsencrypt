@@ -5,7 +5,10 @@ set -e
 domain="$1"
 token="$2"
 
-export KUBECONFIG=/tmp/.kubeconfig
+export TMPDIR=$(mktemp -d)
+trap 'rm -rf ${TMPDIR}' EXIT INT TERM
+
+export KUBECONFIG=${TMPDIR}/.kubeconfig
 oc login kubernetes.default.svc.cluster.local:443 --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$token >/dev/null || exit 1
 
 result=''
@@ -40,5 +43,4 @@ else
   echo "We already have a certificate for ${domain} which is still valid for at least 30 days."
 fi
 
-echo "Configuring certificate for requests to https://${domain}/"
 /usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t ${token} -p ${project} -r ${routes}

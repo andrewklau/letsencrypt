@@ -97,11 +97,11 @@ IFS=';'
 #    break
 #  fi
 #done
-result=($(oc get -n $project route ${route} --output="jsonpath={.spec.to.name};{.spec.tls..termination}"))
-service=${result[0]}
-termination=${result[1]}
+read service path termination < <(oc get -n $project route ${route} --output="jsonpath={.spec.to.name};{.spec.path};{.spec.tls..termination}")
 
 IFS="$OIFS"
+
+echo "Configuring certificate for requests to https://${hostname}${path}"
 
 # Prepare key, cert and ca file to be inserted into json
 key=$(sed ':a;N;$!ba;s/\n/\\n/g' $key_file)
@@ -130,7 +130,7 @@ case $termination in
     .spec.tls.key=\"${key}\" | \
     .spec.tls.certificate=\"${cert}\" | \
     .spec.tls.caCertificate=\"${ca}\"" > \
-    /tmp/$route.new.json
+    ${TMPDIR}/$route.new.json
     ;;
   passthrough)
     destination_ca=$(openssl s_client -connect ${hostname}:443 -servername ${hostname} -prexit -showcerts </dev/null 2>/dev/null | sed -nr '/BEGIN\ CERTIFICATE/H;//,/END\ CERTIFICATE/G;s/\n(\n[^\n]*){2}$//p' | sed ':a;N;$!ba;s/\n/\\n/g')
@@ -142,7 +142,7 @@ case $termination in
       .spec.tls.certificate=\"${cert}\" | \
       .spec.tls.caCertificate=\"${ca}\" | \
       .spec.tls.destinationCACertificate=\"${destination_ca}\"" > \
-      /tmp/$route.new.json
+      ${TMPDIR}/$route.new.json
     else
       echo "ERROR: Failed to obtain CA from backend. Route not replaced." >&2
       exit 1
@@ -155,14 +155,14 @@ case $termination in
     .spec.tls.certificate=\"${cert}\" | \
     .spec.tls.caCertificate=\"${ca}\" | \
     .spec.tls.insecureEdgeTerminationPolicy=\"Redirect\"" > \
-    /tmp/$route.new.json
+    ${TMPDIR}/$route.new.json
     ;;
 esac
 
 if $dryrun; then
   echo -e "Dry-run enabled, old route not replaced. New route would look like this:\n"
-  cat /tmp/$route.new.json
+  cat ${TMPDIR}/$route.new.json
 else
-  oc replace --namespace=$project routes $route -f /tmp/$route.new.json
+  oc replace --namespace=$project routes $route -f ${TMPDIR}/$route.new.json
 fi
 
