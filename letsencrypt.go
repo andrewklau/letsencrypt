@@ -21,7 +21,7 @@ func renew(renewCronExpr *cronexpr.Expression) {
     certs, _ := filepath.Glob("/var/lib/letsencrypt/*.crt")
     for _, cert := range certs {
       domain :=  strings.TrimSuffix(filepath.Base(cert), filepath.Ext(cert))
-      proc := sh("/usr/local/letsencrypt/letsencrypt.sh '%s' `cat /run/secrets/kubernetes.io/serviceaccount/token`", domain)
+      proc := sh("/usr/local/letsencrypt/bin/letsencrypt.sh '%s' `cat /run/secrets/kubernetes.io/serviceaccount/token`", domain)
       fmt.Println(proc.stderr + proc.stdout)
     }
   }
