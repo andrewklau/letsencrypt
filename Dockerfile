@@ -9,20 +9,22 @@ RUN rpm -ihv https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
     chmod 775 /srv/.well-known/acme-challenge && \  
     cd /usr/local/bin && \
     curl -O https://console.appuio.ch/console/extensions/clients/linux/oc && \
-    chmod 755 /usr/local/bin/oc
+    chmod 755 /usr/local/bin/oc && \
+    ln -s /go/src/github.com/appuio/letsencrypt /usr/local/letsencrypt
 
-ADD acme-tiny/acme_tiny.py bin/* src/* ca/* /usr/local/letsencrypt/
+ADD . /go/src/github.com/appuio/letsencrypt/
 
-RUN yum -y --enablerepo=rhel-7-server-optional-rpms install golang-bin && \   
+RUN export GOPATH=/go && \
+    yum -y --enablerepo=rhel-7-server-optional-rpms install golang-bin && \   
     cd /usr/local/letsencrypt && \
-    go build letsencrypt.go sh.go && \
+    go install github.com/appuio/letsencrypt && \
     yum -y history undo last && \  
     yum clean all
 
 USER 1001
-ENV HOME /var/lib/letsencrypt
+
+ENV HOME=/var/lib/letsencrypt
 
 EXPOSE 8080
 
-WORKDIR /tmp
-CMD ["/usr/local/letsencrypt/letsencrypt"]
+CMD ["/go/bin/letsencrypt"]

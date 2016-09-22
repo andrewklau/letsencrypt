@@ -38,9 +38,9 @@ if ! [ -s ${domain}.crt ] || ! openssl x509 -checkend 2592000 -noout -in ${domai
     echo "Creating certificate for ${domain}"
   fi
 
-  python /usr/local/letsencrypt/acme_tiny.py --account-key account.key --csr ${domain}.csr --acme-dir /srv/.well-known/acme-challenge/ >${domain}.crt
+  python /usr/local/letsencrypt/acme-tiny/acme_tiny.py --account-key account.key --csr ${domain}.csr --acme-dir /srv/.well-known/acme-challenge/ >${domain}.crt
 else
   echo "We already have a certificate for ${domain} which is still valid for at least 30 days."
 fi
 
-/usr/local/letsencrypt/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t ${token} -p ${project} -r ${routes}
+/usr/local/letsencrypt/bin/insert-certificate.sh -h $domain -c ${domain}.crt -k ${domain}.key -t ${token} -p ${project} -r ${routes}
