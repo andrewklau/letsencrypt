@@ -5,7 +5,7 @@ MAINTAINER Daniel Tschan <tschan@puzzle.ch>
 RUN rpm -ihv https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
     yum -y install openssl jq && \
     yum clean all && \
-    mkdir -p /srv/.well-known/acme-challenge /usr/local/letsencrypt /var/lib/letsencrypt && \
+    mkdir -p /srv/.well-known/acme-challenge /var/lib/letsencrypt && \
     chmod 775 /srv/.well-known/acme-challenge && \  
     cd /usr/local/bin && \
     curl -O https://console.appuio.ch/console/extensions/clients/linux/oc && \

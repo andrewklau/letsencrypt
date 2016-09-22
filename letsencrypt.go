@@ -15,6 +15,7 @@ func renew(renewCronExpr *cronexpr.Expression) {
   for {
     now := time.Now()
     next := renewCronExpr.Next(now)
+    fmt.Printf("Next certificate renewal run at %v\n", next)
     time.Sleep(next.Sub(now))
     
     certs, _ := filepath.Glob("/var/lib/letsencrypt/*.crt")
